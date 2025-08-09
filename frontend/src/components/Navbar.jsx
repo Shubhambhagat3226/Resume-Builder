@@ -1,5 +1,7 @@
 import React from 'react'
+import { LuLayoutTemplate } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
+import { ProfileInfoCard } from './Cards'
 
 function Navbar({ activeMenu }) {
     return (
@@ -8,10 +10,15 @@ function Navbar({ activeMenu }) {
                 <Link to="/" className='flex items-center gap-3' >
                     <div className='flex items-center pb-6 gap-3'>
                         <div className='w-10 h-10 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-200'>
-
+                            <LuLayoutTemplate className='w-5 h-5 text-white' />
                         </div>
+
+                        <span className='text-xl sm:text-2xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent'>
+                            Resume Builder
+                        </span>
                     </div>
                 </Link>
+                <ProfileInfoCard />
             </div>
         </div>
     )

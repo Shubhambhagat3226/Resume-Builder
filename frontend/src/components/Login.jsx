@@ -32,10 +32,11 @@ function Login({ setCurrentPage }) {
                 password
             });
 
-            const { token } = response.data;
+            const { token, user } = response.data;
+            // console.log("Login: ", token)
             if (token) {
                 localStorage.setItem('token', token);
-                updateUser(response.data.user);
+                updateUser(user);
                 navigate('/dashboard');
             }
 

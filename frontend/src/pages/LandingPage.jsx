@@ -9,7 +9,7 @@ import { RxCross2 } from "react-icons/rx";
 import { UserContext } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { ProfileInfoCard } from '../components/Cards';
-import Modal from '../components/Model';
+import Modal from '../components/Modal';
 import SignUp from '../components/SignUp';
 import Login from '../components/Login';
 
@@ -303,7 +303,7 @@ function LandingPage() {
                 </div>
             </footer>
 
-            {/* MODEL FOR LOGIN AND SIGNUP */}
+            {/* MODaL FOR LOGIN AND SIGNUP */}
             <Modal isOpen={openAuthModal}
                 onClose={() => {
                     setOpenAuthModal(false),
