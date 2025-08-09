@@ -90,15 +90,15 @@ export const createResume = async (req, res) => {
 // GET FUNCTION
 export const getResume = async (req, res) => {
     try {
-        const resume = await Resume.findOne({ userId: req.user._id }).sort({
+        const resumes = await Resume.find({ userId: req.user._id }).sort({
             updatedAt: -1
         });
 
-        if (!resume) {
+        if (!resumes) {
             return res.status(404).json({ message: 'Resume not found' });
         }
 
-        res.status(200).json(resume);
+        res.status(200).json(resumes);
     } catch (error) {
         res.status(500).json({ message: 'Failed to retrieve resume', error: error.message });
     }

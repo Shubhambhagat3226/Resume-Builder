@@ -44,7 +44,21 @@ const CreateResumeForm = (onSuccess) => {
                 Give your resume a title to get started. You can customize everything later.
             </p>
             <form onSubmit={handleCreateResume}>
+                <Input
+                    value={title}
+                    onChange={({ target }) => setTitle(target.value)}
+                    label={'Resume Title'}
+                    placeholder='e.g., John Doe - Software Engineer'
+                    type='text'
+                />
 
+                {error && <p className='text-red-500 text-sm mb-4'>{error}</p>}
+
+                <button
+                    type='submit'
+                    className='w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl hover:scale-105 hover:shadow-xl hover:shadow-rose-200 transition-all'>
+                    Create Resume
+                </button>
             </form>
         </div>
     )

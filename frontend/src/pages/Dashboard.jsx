@@ -102,10 +102,11 @@ function Dashboard() {
             const response = await axiosInstance.get(API_PATHS.RESUME.GET_ALL);
 
             // ADD COMPLETION PERCENTAGE TO EACH RESUMES
-            const resumeWithCompletion = response.data.map(resume => ({
+            const resumeWithCompletion = response.data.map((resume) => ({
                 ...resume,
                 completion: calculateCompletion(resume)
             }));
+            console.log(resumeWithCompletion)
 
             setAllResumes(resumeWithCompletion);
         }
@@ -138,7 +139,7 @@ function Dashboard() {
         }
         finally {
             setResumeToDelete(null)
-            showDeleteConfirmation(false);
+            setShowDeleteConfirmation(false);
         }
     }
 
@@ -214,7 +215,7 @@ function Dashboard() {
                             </div>
 
                             {
-                                allResumes.map((resume) => {
+                                allResumes.map((resume) => (
                                     <ResumeSummaryCard key={resume._id}
                                         imageUrl={resume.thumbnailLink}
                                         title={resume.title}
@@ -226,7 +227,7 @@ function Dashboard() {
                                         isPremium={resume.isPremium}
                                         isNew={moment().diff(moment(resume.createdAt), 'days') < 7}
                                     />
-                                })
+                                ))
                             }
                         </div>
                     )
