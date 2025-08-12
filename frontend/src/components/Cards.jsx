@@ -208,7 +208,7 @@ export const ResumeSummaryCard = ({
 
 
 // TEMPLATES CARD
-export const TemplateCard = ({ thumbnailImg, isSelected, onSelect }) {
+export const TemplateCard = ({ thumbnailImg, isSelected, onSelect }) => {
 
     return (
         <div className={`group h-auto md:h-[300px] lg:h-[320px] flex flex-col bg-white border-2 overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-lg rounded-3xl ${isSelected ? 'border-violet-500 shadow-lg shadow-violet-500/20 bg-violet-50' : 'border-gray-200 hover:border-violet-300'}`}
