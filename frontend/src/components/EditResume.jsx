@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
 import { fixTailwindColors } from '../utils/colore';
+import html2canvas from "html2canvas";
 
 import html2pdf from 'html2pdf.js'
 import StepProgress from './StepProgress';
@@ -26,6 +27,7 @@ import {
     SkillsInfoForm,
     WorkExperienceForm
 } from './Forms';
+import { dataURLtoFile } from '../utils/helper';
 
 
 // Resize observer hook
@@ -143,7 +145,7 @@ const EditResume = () => {
 
         // Profile Info
         totalFields += 3;
-        if (resumeData.profileInfo.fullName) completedFields++;
+        if (resumeData.profileInfo.fullname) completedFields++;
         if (resumeData.profileInfo.designation) completedFields++;
         if (resumeData.profileInfo.summary) completedFields++;
 

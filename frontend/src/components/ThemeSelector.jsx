@@ -62,7 +62,7 @@ const ThemeSelector = ({ selectedTheme, setSelectedTheme, resumeData, onClose })
                 <div className='lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-4 sm:p-6'>
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] lg:max-h-[70vh] overflow-auto p-2'>
                         {
-                            resumeTemplates.map((template, index) => {
+                            resumeTemplates.map((template, index) => (
                                 <TemplateCard
                                     key={`templates_${index}`}
                                     thumbnailImg={template.thumbnailImg}
@@ -72,7 +72,7 @@ const ThemeSelector = ({ selectedTheme, setSelectedTheme, resumeData, onClose })
                                         index
                                     })}
                                 />
-                            })
+                            ))
                         }
                     </div>
                 </div>
