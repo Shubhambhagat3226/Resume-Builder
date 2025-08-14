@@ -78,7 +78,7 @@ const ThemeSelector = ({ selectedTheme, setSelectedTheme, resumeData, onClose })
                 </div>
 
                 {/* RIGHT AREA  */}
-                <div className='lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-4 sm:p-6' ref={resumeRef}>
+                <div className='lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-0 sm:p-0 overflow-hidden ' ref={resumeRef}>
                     <RenderResume
                         templateId={selectedTemplate?.theme || ""}
                         resumeData={resumeData || DUMMY_RESUME_DATA}
