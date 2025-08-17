@@ -106,7 +106,7 @@ function Dashboard() {
                 ...resume,
                 completion: calculateCompletion(resume)
             }));
-            console.log(resumeWithCompletion)
+            // console.log(resumeWithCompletion)
 
             setAllResumes(resumeWithCompletion);
         }
