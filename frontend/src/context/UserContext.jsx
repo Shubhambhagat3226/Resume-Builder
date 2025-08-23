@@ -6,7 +6,16 @@ import { API_PATHS } from "../utils/apiPaths";
 export const UserContext = createContext();
 
 const UserProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        // Initialize state from localStorage on component mount
+        try {
+            const storedUser = localStorage.getItem('user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch (error) {
+            console.error("Failed to parse user from localStorage", error);
+            return null;
+        }
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,13 +44,14 @@ const UserProvider = ({ children }) => {
 
     const updateUser = (userData) => {
         setUser(userData);
-        // localStorage.setItem('token', userData.token);
+        localStorage.setItem('user', JSON.stringify(userData));
         setLoading(false);
     }
 
     const clearUser = () => {
         setUser(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setLoading(false);
     }
 
