@@ -1,12 +1,20 @@
 import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadsFolder = 'uploads/';
-        cb(null, uploadsFolder);
+        cb(null, uploadsDir);
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+        cb(null, uniqueName);
     }
 });
 
@@ -22,6 +30,10 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: storage,
-    fileFilter: fileFilter
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+        files: 2 // Maximum 2 files (thumbnail + profileImage)
+    }
 });
 export default upload;

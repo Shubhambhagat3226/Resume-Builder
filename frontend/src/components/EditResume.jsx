@@ -7,7 +7,7 @@ import { LuDownload, LuPalette, LuTrash2 } from 'react-icons/lu';
 import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
-import { fixTailwindColors } from '../utils/colore';
+import { fixTailwindColors, cleanupColorOverrides } from '../utils/colors';
 import html2canvas from "html2canvas";
 
 import html2pdf from 'html2pdf.js'
@@ -524,32 +524,110 @@ const EditResume = () => {
         }
     }
 
-    // IT WILL HELP IN CHOOSING THE PREVIEW AS WELL AS HELPS IN DOWNLOADING THE RESUME ALSO SAVES THE RESUME AS A IMAGE.
-    const uploadResumeImages = async () => {
+    // Save resume data first, then try to generate and upload thumbnail
+    const saveResumeAndImages = async () => {
         try {
             setIsLoading(true)
 
-            const thumbnailElement = thumbnailRef.current
-            if (!thumbnailElement) {
-                throw new Error("Thumbnail element not found")
+            // First, save the resume data regardless of image upload
+            await updateResumeDetails("")
+            
+            // Then try to generate and upload thumbnail
+            let thumbnailLink = "";
+            
+            try {
+                thumbnailLink = await generateAndUploadThumbnail();
+                
+                if (thumbnailLink) {
+                    // Update with the thumbnail link if successful
+                    await updateResumeDetails(thumbnailLink);
+                }
+            } catch (imageError) {
+                console.warn('Thumbnail generation failed, but data was saved:', imageError);
+                // Don't throw - data is already saved
             }
 
-            const fixedThumbnail = fixTailwindColors(thumbnailElement)
+            toast.success("Resume Updated Successfully")
+            navigate("/dashboard")
+        } catch (error) {
+            console.error("Error saving resume:", error)
+            toast.error("Failed to save resume")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+    
+    // Generate thumbnail from the actual preview viewport to maintain template styling
+    const generateAndUploadThumbnail = async () => {
+        // Use the preview container ref instead of hidden thumbnail
+        const previewElement = previewContainerRef.current
+        if (!previewElement) {
+            throw new Error("Preview element not found")
+        }
 
-            const thumbnailCanvas = await html2canvas(fixedThumbnail, {
-                scale: 0.5,
+        // Find the actual resume render element within the preview
+        const resumeElement = previewElement.querySelector('.preview-container')
+        if (!resumeElement) {
+            throw new Error("Resume element not found in preview")
+        }
+
+        try {
+            // Add a temporary style to ensure the element is visible for capture
+            const originalStyle = {
+                transform: resumeElement.style.transform,
+                opacity: resumeElement.style.opacity,
+                visibility: resumeElement.style.visibility
+            }
+            
+            // Ensure element is visible for capture
+            resumeElement.style.transform = 'none'
+            resumeElement.style.opacity = '1'
+            resumeElement.style.visibility = 'visible'
+            
+            // Wait for any pending renders
+            await new Promise(resolve => setTimeout(resolve, 200))
+
+            const thumbnailCanvas = await html2canvas(resumeElement, {
+                scale: 0.5, // Reduce scale for smaller file size
                 backgroundColor: "#FFFFFF",
                 logging: false,
+                useCORS: true,
+                allowTaint: true,
+                width: resumeElement.offsetWidth,
+                height: resumeElement.offsetHeight,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: resumeElement.offsetWidth,
+                windowHeight: resumeElement.offsetHeight
             })
+            
+            // Restore original styles
+            resumeElement.style.transform = originalStyle.transform
+            resumeElement.style.opacity = originalStyle.opacity
+            resumeElement.style.visibility = originalStyle.visibility
 
-            document.body.removeChild(fixedThumbnail)
+            // Check if canvas has content
+            if (thumbnailCanvas.width === 0 || thumbnailCanvas.height === 0) {
+                throw new Error("Generated canvas is empty")
+            }
 
-            // STORE THE IMAGE AS RESUME
-            const thumbnailDataUrl = thumbnailCanvas.toDataURL("image/png")
+            // Convert to data URL with good quality
+            const thumbnailDataUrl = thumbnailCanvas.toDataURL("image/png", 0.8)
+            
+            // Check if data URL is valid
+            if (thumbnailDataUrl === "data:," || thumbnailDataUrl.length < 1000) {
+                throw new Error("Generated image data is invalid or too small")
+            }
+            
             const thumbnailFile = dataURLtoFile(
                 thumbnailDataUrl,
                 `thumbnail-${resumeId}.png`
             )
+            
+            // Check file size
+            if (thumbnailFile.size === 0) {
+                throw new Error("Generated file is empty")
+            }
 
             const formData = new FormData()
             formData.append("thumbnail", thumbnailFile)
@@ -562,16 +640,11 @@ const EditResume = () => {
                 }
             )
 
-            const { thumbnailLink } = uploadResponse.data
-            await updateResumeDetails(thumbnailLink)
-
-            toast.success("Resume Updated Successfully")
-            navigate("/dashboard")
+            return uploadResponse.data.thumbnailLink
+            
         } catch (error) {
-            console.error("Error Uploading Images:", error)
-            toast.error("Failed to upload images")
-        } finally {
-            setIsLoading(false)
+            console.error('Canvas generation error:', error)
+            throw error
         }
     }
 
@@ -753,7 +826,7 @@ const EditResume = () => {
 
                                 <button
                                     className={buttonStyles.save}
-                                    onClick={uploadResumeImages}
+                                    onClick={saveResumeAndImages}
                                     disabled={isLoading}>
                                     {
                                         isLoading ? <Loader size={16} className='animate-spin' />
