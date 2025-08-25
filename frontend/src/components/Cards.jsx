@@ -43,71 +43,50 @@ export const ResumeSummaryCard = ({
     onSelect,
     onDelete,
     completion = 85,
+    thumbnailLink = null, // 👈 added thumbnailLink prop
 }) => {
     const [isHovered, setIsHovered] = useState(false);
 
-    // CREATE AT
+    // Format dates
     const formattedCreatedDate = createdAt
         ? new Date(createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
+            month: "short", day: "numeric", year: "numeric"
         })
         : "—";
 
-    // UPDATED AT
     const formattedUpdatedDate = updatedAt
         ? new Date(updatedAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
+            month: "short", day: "numeric", year: "numeric"
         })
         : "—";
 
-    // COLOR FOR COMPLETION STATUS
     const getCompletionColor = () => {
         if (completion >= 90) return cardStyles.completionHigh;
         if (completion >= 70) return cardStyles.completionMedium;
         return cardStyles.completionLow;
     };
 
-    // ICON FOR COMPLETION STATUS
     const getCompletionIcon = () => {
         if (completion >= 90) return <LuAward size={12} />;
         if (completion >= 70) return <LuTrendingUp size={12} />;
         return <LuZap size={12} />;
     };
 
-    // DELETE METHOD
     const handleDeleteClick = (e) => {
         e.stopPropagation();
         if (onDelete) onDelete();
     };
 
-    // COLORS
-    const generateDesign = () => {
-        const colors = [
-            "from-blue-50 to-blue-100",
-            "from-purple-50 to-purple-100",
-            "from-emerald-50 to-emerald-100",
-            "from-amber-50 to-amber-100",
-            "from-rose-50 to-rose-100"
-        ];
-        return colors[title.length % colors.length];
-    };
-
-    const designColor = generateDesign();
-
     return (
         <div
             className={cardStyles.resumeCard}
             onClick={onSelect}
-            onMouseEnter={() => setIsHovered(true)} // MOUSE OR SWIPE FOR MOBILE
+            onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Completion indicator */}
             <div className={cardStyles.completionIndicator}>
-                <div className={`${cardStyles.completionDot} bg-gradient-to-r ${getCompletionColor()}`}>
+                <div className={` ${cardStyles.completionDot} bg-gradient-to-r ${getCompletionColor()}`}>
                     <div className={cardStyles.completionDotInner} />
                 </div>
                 <span className={cardStyles.completionPercentageText}>{completion}%</span>
@@ -115,41 +94,31 @@ export const ResumeSummaryCard = ({
             </div>
 
             {/* Preview area */}
-            <div className={`${cardStyles.previewArea} bg-gradient-to-br ${designColor}`}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className={cardStyles.emptyPreviewIcon}>
-                        <MdEdit size={28} className="text-indigo-600" />
+            <div className={cardStyles.previewArea}>
+                {thumbnailLink ? (
+                    <img
+                        src={thumbnailLink}
+                        alt="Resume thumbnail"
+                        className="w-full h-[220px] object-cover rounded-xl border border-gray-200"
+                    />
+                ) : (
+                    <div className="flex flex-col items-center justify-center w-full h-[220px] bg-gray-50 rounded-xl">
+                        <div className={cardStyles.emptyPreviewIcon}>
+                            <MdEdit size={28} className="text-indigo-600" />
+                        </div>
+                        <span className={cardStyles.emptyPreviewText}>{title}</span>
+                        <span className={cardStyles.emptyPreviewSubtext}>
+                            {completion === 0 ? "Start building" : `${completion}% completed`}
+                        </span>
                     </div>
-                    <span className={cardStyles.emptyPreviewText}>{title}</span>
-                    <span className={cardStyles.emptyPreviewSubtext}>
-                        {completion === 0 ? "Start building" : `${completion}% completed`}
-                    </span>
-
-                    {/* Mini resume sections indicator */}
-                    <div className="mt-4 flex gap-2">
-                        {['Profile', 'Work', 'Skills', 'Edu'].map((section, i) => (
-                            <div
-                                key={i}
-                                className={`px-2 py-1 text-xs rounded-md ${i < Math.floor(completion / 25)
-                                    ? 'bg-white/90 text-indigo-600 font-medium'
-                                    : 'bg-white/50 text-gray-500'
-                                    }`}
-                            >
-                                {section}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                )}
 
                 {/* Hover overlay with action buttons */}
                 {isHovered && (
                     <div className={cardStyles.actionOverlay}>
                         <div className={cardStyles.actionButtonsContainer}>
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onSelect) onSelect();
-                                }}
+                                onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
                                 className={cardStyles.editButton}
                                 title="Edit"
                             >
@@ -169,42 +138,25 @@ export const ResumeSummaryCard = ({
 
             {/* Info area */}
             <div className={cardStyles.infoArea}>
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                        <h5 className={cardStyles.title}>{title}</h5>
-                        <div className={cardStyles.dateInfo}>
-                            <LuClock size={12} />
-                            <span>Created At: {formattedCreatedDate}</span>
-                            <span className="ml-2">Updated At: {formattedUpdatedDate}</span>
-                        </div>
-                    </div>
+                <h5 className={cardStyles.title}>{title}</h5>
+                <div className={cardStyles.dateInfo}>
+                    <LuClock size={12} />
+                    <span>Created At: {formattedCreatedDate}</span>
+                    <span className="ml-2">Updated At: {formattedUpdatedDate}</span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-3">
                     <div
-                        className={`h-full bg-gradient-to-r ${getCompletionColor()} rounded-full transition-all duration-700 ease-out relative overflow-hidden`}
+                        className={`h-full bg-gradient-to-r ${getCompletionColor()} rounded-full transition-all duration-700`}
                         style={{ width: `${completion}%` }}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
-                    </div>
-                    <div
-                        className={`absolute top-0 h-full w-4 bg-gradient-to-r from-transparent to-white/50 blur-sm transition-all duration-700`}
-                        style={{ left: `${Math.max(0, completion - 2)}%` }}
-                    ></div>
-                </div>
-
-                {/* Completion status */}
-                <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs font-medium text-gray-500">
-                        {completion < 50 ? "Getting Started" : completion < 80 ? "Almost There" : "Ready to Go!"}
-                    </span>
-                    <span className="text-xs font-bold text-gray-700">{completion}% Complete</span>
+                    />
                 </div>
             </div>
         </div>
     );
 };
+
 
 
 // TEMPLATES CARD
