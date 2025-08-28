@@ -581,7 +581,7 @@ const EditResume = () => {
         const oklchRegex = /oklch\([^)]+\)/gi;
         html = html.replace(oklchRegex, (match) => {
             const converted = oklchToRgb(match);
-            console.log("🎨 Converted", match, "→", converted);
+            // console.log("🎨 Converted", match, "→", converted);
             return converted;
         });
 
