@@ -204,3 +204,21 @@ export const dataURLtoFile = (dataUrl, fileName) => {
 
 // IN THIS HELPER YOU WILL GET MULTIPLE HELPER FUNCTION LIKE WISE AS IT IS EXPLAINED BRIEFLY ON THE TOP OF EACH SO GO THROUGH
 // TO GET BETTER KNOWLEDGE...
+
+
+// DEBUG: Find if any element still has oklch() in its styles
+export const logOklchUsage = (element) => {
+    let count = 0;
+    element.querySelectorAll("*").forEach((node) => {
+        const style = node.getAttribute("style") || "";
+        if (style.includes("oklch(")) {
+            console.warn("❌ Still has oklch:", node, style);
+            count++;
+        }
+    });
+    if (count === 0) {
+        console.log("✅ No oklch found, safe to capture");
+    } else {
+        console.log(`⚠️ Found ${count} elements with oklch styles`);
+    }
+};

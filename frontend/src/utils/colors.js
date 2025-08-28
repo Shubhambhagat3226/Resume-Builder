@@ -39,5 +39,3 @@ export const fixTailwindColors = (element) => {
 
     return clone;
 };
-
-// ITS A HELPER FUNCTION

@@ -7,7 +7,7 @@ import { LuDownload, LuPalette, LuTrash2 } from 'react-icons/lu';
 import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
-import { fixTailwindColors } from '../utils/colore';
+import { fixTailwindColors } from '../utils/colors';
 import html2canvas from "html2canvas";
 
 import html2pdf from 'html2pdf.js'
@@ -27,7 +27,7 @@ import {
     SkillsInfoForm,
     WorkExperienceForm
 } from './Forms';
-import { dataURLtoFile } from '../utils/helper';
+import { dataURLtoFile, captureElementAsImage, logOklchUsage } from '../utils/helper';
 
 
 // Resize observer hook
@@ -525,55 +525,134 @@ const EditResume = () => {
     }
 
     // IT WILL HELP IN CHOOSING THE PREVIEW AS WELL AS HELPS IN DOWNLOADING THE RESUME ALSO SAVES THE RESUME AS A IMAGE.
-    const uploadResumeImages = async () => {
-        try {
-            setIsLoading(true)
+    // inside EditResume.jsx
+    // deep clone with inlined computed styles
+    function deepCloneWithStyles(node) {
+        const clone = node.cloneNode(true);
 
-            const thumbnailElement = thumbnailRef.current
-            if (!thumbnailElement) {
-                throw new Error("Thumbnail element not found")
+        const applyStyles = (src, dest) => {
+            const computed = window.getComputedStyle(src);
+            for (let prop of computed) {
+                dest.style[prop] = computed.getPropertyValue(prop);
             }
 
-            const fixedThumbnail = fixTailwindColors(thumbnailElement)
+            // replace oklch colors with rgb
+            fixTailwindColors(dest);
 
-            const thumbnailCanvas = await html2canvas(fixedThumbnail, {
-                scale: 0.5,
-                backgroundColor: "#FFFFFF",
-                logging: false,
-            })
+            Array.from(src.children).forEach((child, i) =>
+                applyStyles(child, dest.children[i])
+            );
+        };
 
-            document.body.removeChild(fixedThumbnail)
+        applyStyles(node, clone);
+        return clone;
+    }
 
-            // STORE THE IMAGE AS RESUME
-            const thumbnailDataUrl = thumbnailCanvas.toDataURL("image/png")
-            const thumbnailFile = dataURLtoFile(
-                thumbnailDataUrl,
-                `thumbnail-${resumeId}.png`
-            )
+    // --- Convert OKLCH → RGB (approximate)
+    function oklchToRgb(oklch) {
+        try {
+            // Extract numbers: oklch(0.7 0.2 120)
+            const regex = /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/i;
+            const match = oklch.match(regex);
+            if (!match) return "rgb(0,0,0)";
 
-            const formData = new FormData()
-            formData.append("thumbnail", thumbnailFile)
+            let [, l, c, h, alpha] = match;
+            l = parseFloat(l); // lightness
+            c = parseFloat(c); // chroma
+            h = parseFloat(h); // hue in deg
+            alpha = alpha ? parseFloat(alpha) : 1;
+
+            // crude conversion: map OKLCH → HSL
+            const lightness = Math.round(l * 100);
+            const saturation = Math.min(100, Math.round(c * 150)); // scale chroma
+            const hue = Math.round(h);
+
+            return alpha < 1
+                ? `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`
+                : `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        } catch {
+            return "rgb(0,0,0)";
+        }
+    }
+
+    function sanitizeOklchColors(element) {
+        let html = element.outerHTML;
+
+        const oklchRegex = /oklch\([^)]+\)/gi;
+        html = html.replace(oklchRegex, (match) => {
+            const converted = oklchToRgb(match);
+            console.log("🎨 Converted", match, "→", converted);
+            return converted;
+        });
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+        return wrapper.firstChild;
+    }
+
+    const uploadResumeImages = async () => {
+        try {
+            setIsLoading(true);
+
+            const element = thumbnailRef.current;
+            if (!element) throw new Error("Thumbnail element not found");
+
+            await document.fonts.ready;
+
+            // deep clone
+            const clone = deepCloneWithStyles(element);
+            const safeClone = sanitizeOklchColors(clone);
+
+            Object.assign(safeClone.style, {
+                display: "block",
+                position: "absolute",
+                top: "-9999px",
+                left: "-9999px",
+                width: "794px",
+                height: "1123px",
+                background: "#fff",
+                opacity: 1, // ✅ visible for rendering
+                pointerEvents: "none",
+            });
+
+            document.body.appendChild(safeClone);
+
+            const canvas = await html2canvas(safeClone, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#fff",
+            });
+
+            document.body.removeChild(safeClone);
+
+            const dataUrl = canvas.toDataURL("image/png", 1.0);
+            if (!dataUrl || dataUrl.length < 100) {
+                throw new Error("Failed to capture resume thumbnail (empty image)");
+            }
+
+            const file = dataURLtoFile(dataUrl, `thumbnail-${resumeId}.png`);
+            const formData = new FormData();
+            formData.append("thumbnail", file);
 
             const uploadResponse = await axiosInstance.put(
                 API_PATHS.RESUME.UPLOAD_IMAGES(resumeId),
                 formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                }
-            )
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
 
-            const { thumbnailLink } = uploadResponse.data
-            await updateResumeDetails(thumbnailLink)
+            const { thumbnailLink } = uploadResponse.data;
+            await updateResumeDetails(thumbnailLink);
 
-            toast.success("Resume Updated Successfully")
-            navigate("/dashboard")
-        } catch (error) {
-            console.error("Error Uploading Images:", error)
-            toast.error("Failed to upload images")
+            toast.success("Resume Updated Successfully");
+            navigate("/dashboard");
+        } catch (err) {
+            console.error("Error Uploading Images:", err);
+            toast.error("Failed to upload images");
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
+
 
     // THIS FUNCTION WILL HELP IN UPLOADING THE RESUMES.
     // AND PUT WILL HELP IN UPDATION ON BACKEND...
@@ -857,16 +936,28 @@ const EditResume = () => {
             </Modal>
 
             {/* now thumnail error fix  */}
-            <div style={{ display: "none" }} ref={thumbnailRef}>
-                <div className={st.hiddenThumbnail}>
-                    <RenderResume key={`thumb-${resumeData?.template?.theme}`}
-                        templateId={resumeData?.template?.theme || ""}
-                        resumeData={resumeData}
-                    />
-
-                </div>
-
+            {/* Thumbnail offscreen but still renderable */}
+            <div
+                ref={thumbnailRef}
+                style={{
+                    position: "absolute",
+                    top: "-9999px",
+                    left: "-9999px",
+                    opacity: 0,
+                    pointerEvents: "none",
+                    width: "794px",
+                    height: "1123px",
+                    background: "#fff",
+                    overflow: "hidden",
+                }}
+            >
+                <RenderResume
+                    key={`thumb-${resumeData?.template?.theme}`}
+                    templateId={resumeData?.template?.theme || ""}
+                    resumeData={resumeData}
+                />
             </div>
+
         </DashboardLayout>
     )
 }
